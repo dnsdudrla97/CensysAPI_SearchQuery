@@ -67,6 +67,7 @@ def print_short(res):
 	tags = res.get('tags', '')
 	ip = res.get('ip', 'N/A')
 
+	# 문자열 변경 '\n' -> '\\n'
 	http_title = http_title.replace('\n', '\\n')
 	http_title = http_title.replace('\r', '\\r')
 
