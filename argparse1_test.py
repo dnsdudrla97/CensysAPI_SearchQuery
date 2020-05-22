@@ -13,19 +13,16 @@ import argparse
 # args = parser.parse_args()
 # print(args)
 
-def hello(data):
-    print("Hello, {}".format(data))
-
+def hello(name):
+    print("Hello, {}".format(name))
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='심플')
     # name argument 추가
-    parser.add_argument('data')
-    args = parser.parse_args()
-    
-    data = args.data
-    hello(data)
-
+    parser.add_argument('--name', help='이름을 입력해주세요')
+    args = parser.parse_args()    
+    name = args.name
+    hello(name)
 
 if __name__ == "__main__":
     main()

@@ -2,9 +2,15 @@ from censys.ipv4 import *
 from censys.base import *
 import pickle
 import argparse
-import time
+# import time
 import sys
 import os
+
+# help 설명문
+help_desc = '''
+Censys API를 활용한 OSINT
+-- Younsle
+'''
 
 # 필터링 데이터 구조
 filter_fields = ['location.country', 'location.country_code', 'location.city', 'ip',
@@ -21,37 +27,38 @@ filter_fields = ['location.country', 'location.country_code', 'location.city', '
                  'metadata.os', 'tags']
 
 # 인자를 바탕으로 쿼리문을 제작합니다. 
-def build_query_string(args):
-	if len(args.arguments) == 0:
-		s = '*'		
+def make_query(query):
+	if len(query.arguments) == 0:
+		q = '*'		
 	else:
-		s = "(" + args.arguments[0] + ")"
-	if args.tags:
-		if ',' in args.tags:
-			tags_l = args.tags.split(',')
-			tags_q = " AND tags:" + " AND tags:".join(tags_l)
+		q = "(" + query.arguments[0] + ")"
+	print(q)
+	if query.tags:
+		if ',' in query.tags:
+			tags_split = query.tags.split(',')
+			tags_q = " AND tags:" + " AND tags:".join(tags_split)
 		else:
-			tags_q = " AND tags: %s" % args.tags
-		s += tags_q		
-	if args.asn:
-		s += " AND autonomous_system.asn: %s" % args.asn
-	if args.country:
-		s += " AND location.country_code:%s" % args.country
-	if args.http_server:
-		s += " AND 80.http.get.headers.server:%s" % args.http_server	
-	if args.html_title:
-		if " " in args.html_title:
-			title = "\"%s\"" % args.html_title
+			tags_q = " AND tags: %s" % query.tags
+		q += tags_q		
+	if query.asn:
+		q += " AND autonomous_system.asn: %s" % query.asn
+	if query.country:
+		q += " AND location.country_code:%s" % query.country
+	if query.http_server:
+		q += " AND 80.http.get.headers.server:%s" % query.http_server	
+	if query.html_title:
+		if " " in query.html_title:
+			title = "\"%s\"" % query.html_title
 		else:
-			title = args.html_title
-		s += " AND 80.http.get.title:%s" % title	
-	if args.html_body:
-		if " " in args.html_body:
-			body = "\"%s\"" % args.html_body
+			title = query.html_title
+		q += " AND 80.http.get.title:%s" % title	
+	if query.html_body:
+		if " " in query.html_body:
+			body = "\"%s\"" % query.html_body
 		else:
-			body = args.html_body
-		s += " AND 80.http.get.body:%s" % body
-	return s
+			body = query.html_body
+		q += " AND 80.http.get.body:%s" % body
+	return q
 
 # res, ipv4 기반의 일반 정보를 검색 -> dict 형태
 def print_short(res):
@@ -82,32 +89,25 @@ def print_short(res):
 			('OS: %s' % os).ljust(15) +
 			('Tags: %s' % tags))
 
-# help 설명문
-help_desc = '''
-Censys API를 활용한 OSINT
--- Younsle
-'''
-
 # API 설정 - 환경 변수 파일 생성
-def conf_get_censys_api(args):
+def censys_api(api_key):
 	conf_file = "%s/.censys_API.p" % os.environ.get('HOME')
 	api = dict()
 
     # 인자가 있을 경우 해당 환경 변수 파일 생성 및 저장
-	if args.api_id and args.api_secret:
-		api['id'] = args.api_id
-		api['secret'] = args.api_secret
+	if api_key.api_id and api_key.api_secret:
+		api['id'] = api_key.api_id
+		api['secret'] = api_key.api_secret
 		pickle.dump(api, open(conf_file, "wb"))
 		return api
-	
 
-    # if conf file exists, load it
-	print(os.path.isfile(conf_file))
+	# print("환경 변수 파일이 존재합니다. {}".format(os.path.isfile(conf_file)))
 	
-	with open(conf_file,"rb") as f:
-		car_obj_2 = pickle.load(f)
-	print(car_obj_2)
+	# with open(conf_file,"rb") as f:
+	# 	car_obj_2 = pickle.load(f)
+	# print(car_obj_2)
 	
+    # conf_file 존재할시 로드
 	if os.path.isfile(conf_file):
 		try:
 			api = pickle.load(open(conf_file, "rb"))
@@ -119,7 +119,7 @@ def conf_get_censys_api(args):
 			sys.exit(-2)
 		return api
 
-    # 환경 변수가 존재 하지 않을시 저장
+    # 환경 변수 파일에 API가 존재 하지 않을시 저장 후 반환
 	if 'CENSYS_API_ID' in os.environ and 'CENSYS_API_SECRET' in os.environ:
 		api['id'] = os.environ.get('CENSYS_API_ID')
 		api['secret'] = os.environ.get('CENSYS_API_SECRET')
@@ -153,13 +153,13 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	# API 키, 비밀키를 처리 합니다.
-	api = conf_get_censys_api(args)
+	api = censys_api(args)
 	# print(api)
 
 	# API 인증을 진행 합니다.
 	q = CensysIPv4(api_id=api['id'], api_secret=api['secret'])
 	# 인자를 받아와 분류 후 쿼리문을 만듭니다.
-	s = build_query_string(args)
+	s = make_query(args)
 	
 	# 정리한 쿼리를 바탕으로 search 함수를 사용하여 검색을 진행합니다. (필터 리스트 를 사용하여 찾고자 하는 정보를 분산시킵니다.)
 	r = q.search(s, fields=filter_fields)
