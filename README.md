@@ -2,6 +2,8 @@
 
 # 보안 프로젝트
 
+### INSTALL PACKAGE
+- pip install censys
 ### Search List
 
 - IPv4 Searching
