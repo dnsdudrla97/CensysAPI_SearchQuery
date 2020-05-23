@@ -2,14 +2,13 @@ from censys.ipv4 import *
 from censys.base import *
 import pickle
 import argparse
-# import time
 import sys
 import os
 
 # help 설명문
 help_desc = '''
-Censys API를 활용한 OSINT
--- Younsle
+Censys API를 활용한 OSINT툴 개발 - 보안 프로젝트 -
+-- @dnsdudrla97
 '''
 
 # 필터링 데이터 구조
@@ -61,18 +60,18 @@ def make_query(query):
 	return q
 
 # res, ipv4 기반의 일반 정보를 검색 -> dict 형태
-def print_short(res):
+def SearchPrint(query):
 	max_title_len = 50
 	title_head = 'Title: '
 	cut = '[...]'
-	http_title = res.get('80.http.get.title', 'N/A')
-	as_name = res.get('autonomous_system.name', 'N/A')
-	as_num = res.get('autonomous_system.asn', '')
-	loc = '{} / {}'.format(res.get('location.country_code',
-                                   'N/A'), res.get('location.city', 'N/A'))
-	os = res.get('metadata.os', 'N/A')
-	tags = res.get('tags', '')
-	ip = res.get('ip', 'N/A')
+	http_title = query.get('80.http.get.title', 'N/A')
+	as_name = query.get('autonomous_system.name', 'N/A')
+	as_num = query.get('autonomous_system.asn', '')
+	location = '{} / {}'.format(query.get('location.country_code',
+                                   'N/A'), query.get('location.city', 'N/A'))
+	os = query.get('metadata.os', 'N/A')
+	tags = query.get('tags', '')
+	ip = query.get('ip', 'N/A')
 
 	# 문자열 변경 '\n' -> '\\n'
 	http_title = http_title.replace('\n', '\\n')
@@ -85,7 +84,7 @@ def print_short(res):
 	print(ip.ljust(16) +
 			((title_head + '%s') % http_title).ljust(max_title_len) +
 			('AS: %s (%s)' % (as_name, as_num)).ljust(40) +
-			('Loc: %s' % loc).ljust(30) +
+			('Loc: %s' % location).ljust(30) +
 			('OS: %s' % os).ljust(15) +
 			('Tags: %s' % tags))
 
@@ -157,11 +156,11 @@ if __name__ == '__main__':
 	# print(api)
 
 	# API 인증을 진행 합니다.
-	q = CensysIPv4(api_id=api['id'], api_secret=api['secret'])
+	Censys_Auth = CensysIPv4(api_id=api['id'], api_secret=api['secret'])
 	# 인자를 받아와 분류 후 쿼리문을 만듭니다.
-	s = make_query(args)
+	Query_string = make_query(args)
 	
 	# 정리한 쿼리를 바탕으로 search 함수를 사용하여 검색을 진행합니다. (필터 리스트 를 사용하여 찾고자 하는 정보를 분산시킵니다.)
-	r = q.search(s, fields=filter_fields)
-	for e in r:
-		print_short(e)
+	result = Censys_Auth.search(Query_string, fields=filter_fields)
+	for entity in result:
+		SearchPrint(entity)
