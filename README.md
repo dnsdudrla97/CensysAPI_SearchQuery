@@ -1,7 +1,12 @@
-# Algorithm
+# CENSYS SEARCH
 
-### Censys API MAKE~~
+### Search List
 
 - IPv4 Searching
-- http, 80
-- umm.... ssabjil
+- http/https
+- ASN
+- HTML TITLE, BODY
+- TAGS
+- Country code
+
+

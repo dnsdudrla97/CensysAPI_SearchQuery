@@ -31,14 +31,14 @@ def make_query(query):
 		q = '*'		
 	else:
 		q = "(" + query.arguments[0] + ")"
-	print(q)
 	if query.tags:
 		if ',' in query.tags:
 			tags_split = query.tags.split(',')
 			tags_q = " AND tags:" + " AND tags:".join(tags_split)
 		else:
 			tags_q = " AND tags: %s" % query.tags
-		q += tags_q		
+		q += tags_q
+		print(q)
 	if query.asn:
 		q += " AND autonomous_system.asn: %s" % query.asn
 	if query.country:
@@ -99,12 +99,6 @@ def censys_api(api_key):
 		api['secret'] = api_key.api_secret
 		pickle.dump(api, open(conf_file, "wb"))
 		return api
-
-	# print("환경 변수 파일이 존재합니다. {}".format(os.path.isfile(conf_file)))
-	
-	# with open(conf_file,"rb") as f:
-	# 	car_obj_2 = pickle.load(f)
-	# print(car_obj_2)
 	
     # conf_file 존재할시 로드
 	if os.path.isfile(conf_file):
@@ -159,7 +153,7 @@ if __name__ == '__main__':
 	Censys_Auth = CensysIPv4(api_id=api['id'], api_secret=api['secret'])
 	# 인자를 받아와 분류 후 쿼리문을 만듭니다.
 	Query_string = make_query(args)
-	
+    
 	# 정리한 쿼리를 바탕으로 search 함수를 사용하여 검색을 진행합니다. (필터 리스트 를 사용하여 찾고자 하는 정보를 분산시킵니다.)
 	result = Censys_Auth.search(Query_string, fields=filter_fields)
 	for entity in result:
